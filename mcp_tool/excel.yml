@@ -1,0 +1,441 @@
+# Excel MCP服务器配置
+
+server_name: excel
+description: Excel电子表格操作MCP服务器
+
+# 服务器启动配置
+command: python
+args:
+  - "mcp_servers/excel-mcp-server/run_excel_mcp.py"
+env:
+  PYTHONPATH: "mcp_servers/excel-mcp-server"
+  MCP_TRANSPORT: "stdio"
+
+tools:
+  - name: create_workbook
+    description: 创建新的Excel工作簿
+    parameters:
+      filepath: string
+    example:
+      {
+        "function": "create_workbook",
+        "parameters": { "filepath": "report.xlsx" },
+      }
+
+  - name: create_worksheet
+    description: 创建新的工作表
+    parameters:
+      filepath: string
+      sheet_name: string
+    example:
+      {
+        "function": "create_worksheet",
+        "parameters": { "filepath": "report.xlsx", "sheet_name": "Sheet2" },
+      }
+
+  - name: write_data_to_excel
+    description: 向Excel工作表写入数据
+    parameters:
+      filepath: string
+      sheet_name: string
+      data: array
+      start_cell: string
+    example:
+      {
+        "function": "write_data_to_excel",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "data": [["姓名", "年龄"], ["张三", 25], ["李四", 30]],
+            "start_cell": "A1",
+          },
+      }
+
+  - name: read_data_from_excel
+    description: 从Excel工作表读取数据
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_cell: string
+      end_cell: string
+    example:
+      {
+        "function": "read_data_from_excel",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_cell": "A1",
+            "end_cell": "B3",
+          },
+      }
+
+  - name: apply_formula
+    description: 向单元格应用Excel公式
+    parameters:
+      filepath: string
+      sheet_name: string
+      cell: string
+      formula: string
+    example:
+      {
+        "function": "apply_formula",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "cell": "C1",
+            "formula": "=A1+B1",
+          },
+      }
+
+  - name: format_range
+    description: 格式化单元格范围
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_cell: string
+      end_cell: string
+      bold: boolean
+      italic: boolean
+      underline: boolean
+      font_size: number
+      font_color: string
+      bg_color: string
+    example:
+      {
+        "function": "format_range",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_cell": "A1",
+            "end_cell": "B1",
+            "bold": true,
+            "font_size": 14,
+          },
+      }
+
+  - name: create_chart
+    description: 创建图表
+    parameters:
+      filepath: string
+      sheet_name: string
+      data_range: string
+      chart_type: string
+      target_cell: string
+      title: string
+    example:
+      {
+        "function": "create_chart",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "data_range": "A1:B5",
+            "chart_type": "bar",
+            "target_cell": "D1",
+            "title": "销售图表",
+          },
+      }
+
+  - name: create_pivot_table
+    description: 创建数据透视表
+    parameters:
+      filepath: string
+      sheet_name: string
+      data_range: string
+      rows: array
+      values: array
+      columns: array
+      agg_func: string
+    example:
+      {
+        "function": "create_pivot_table",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "data_range": "A1:D10",
+            "rows": ["部门"],
+            "values": ["销售额"],
+            "agg_func": "sum",
+          },
+      }
+
+  - name: create_table
+    description: 创建Excel表格
+    parameters:
+      filepath: string
+      sheet_name: string
+      data_range: string
+      table_name: string
+      table_style: string
+    example:
+      {
+        "function": "create_table",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "data_range": "A1:D10",
+            "table_name": "数据表",
+            "table_style": "TableStyleMedium2",
+          },
+      }
+
+  - name: copy_worksheet
+    description: 复制工作表
+    parameters:
+      filepath: string
+      source_sheet: string
+      target_sheet: string
+    example:
+      {
+        "function": "copy_worksheet",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "source_sheet": "Sheet1",
+            "target_sheet": "Sheet1_Copy",
+          },
+      }
+
+  - name: delete_worksheet
+    description: 删除工作表
+    parameters:
+      filepath: string
+      sheet_name: string
+    example:
+      {
+        "function": "delete_worksheet",
+        "parameters": { "filepath": "report.xlsx", "sheet_name": "Sheet2" },
+      }
+
+  - name: rename_worksheet
+    description: 重命名工作表
+    parameters:
+      filepath: string
+      old_name: string
+      new_name: string
+    example:
+      {
+        "function": "rename_worksheet",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "old_name": "Sheet1",
+            "new_name": "数据表",
+          },
+      }
+
+  - name: get_workbook_metadata
+    description: 获取工作簿元数据
+    parameters:
+      filepath: string
+      include_ranges: boolean
+    example:
+      {
+        "function": "get_workbook_metadata",
+        "parameters": { "filepath": "report.xlsx", "include_ranges": true },
+      }
+
+  - name: merge_cells
+    description: 合并单元格
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_cell: string
+      end_cell: string
+    example:
+      {
+        "function": "merge_cells",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_cell": "A1",
+            "end_cell": "B1",
+          },
+      }
+
+  - name: unmerge_cells
+    description: 取消合并单元格
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_cell: string
+      end_cell: string
+    example:
+      {
+        "function": "unmerge_cells",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_cell": "A1",
+            "end_cell": "B1",
+          },
+      }
+
+  - name: get_merged_cells
+    description: 获取合并的单元格
+    parameters:
+      filepath: string
+      sheet_name: string
+    example:
+      {
+        "function": "get_merged_cells",
+        "parameters": { "filepath": "report.xlsx", "sheet_name": "Sheet1" },
+      }
+
+  - name: copy_range
+    description: 复制单元格范围
+    parameters:
+      filepath: string
+      sheet_name: string
+      source_start: string
+      source_end: string
+      target_start: string
+      target_sheet: string
+    example:
+      {
+        "function": "copy_range",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "source_start": "A1",
+            "source_end": "B5",
+            "target_start": "D1",
+            "target_sheet": "Sheet2",
+          },
+      }
+
+  - name: delete_range
+    description: 删除单元格范围
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_cell: string
+      end_cell: string
+      shift_direction: string
+    example:
+      {
+        "function": "delete_range",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_cell": "A1",
+            "end_cell": "B5",
+            "shift_direction": "up",
+          },
+      }
+
+  - name: validate_excel_range
+    description: 验证Excel范围
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_cell: string
+      end_cell: string
+    example:
+      {
+        "function": "validate_excel_range",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_cell": "A1",
+            "end_cell": "B5",
+          },
+      }
+
+  - name: get_data_validation_info
+    description: 获取数据验证信息
+    parameters:
+      filepath: string
+      sheet_name: string
+    example:
+      {
+        "function": "get_data_validation_info",
+        "parameters": { "filepath": "report.xlsx", "sheet_name": "Sheet1" },
+      }
+
+  - name: insert_rows
+    description: 插入行
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_row: number
+      count: number
+    example:
+      {
+        "function": "insert_rows",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_row": 3,
+            "count": 2,
+          },
+      }
+
+  - name: insert_columns
+    description: 插入列
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_col: number
+      count: number
+    example:
+      {
+        "function": "insert_columns",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_col": 2,
+            "count": 1,
+          },
+      }
+
+  - name: delete_sheet_rows
+    description: 删除行
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_row: number
+      count: number
+    example:
+      {
+        "function": "delete_sheet_rows",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_row": 3,
+            "count": 2,
+          },
+      }
+
+  - name: delete_sheet_columns
+    description: 删除列
+    parameters:
+      filepath: string
+      sheet_name: string
+      start_col: number
+      count: number
+    example:
+      {
+        "function": "delete_sheet_columns",
+        "parameters":
+          {
+            "filepath": "report.xlsx",
+            "sheet_name": "Sheet1",
+            "start_col": 2,
+            "count": 1,
+          },
+      }

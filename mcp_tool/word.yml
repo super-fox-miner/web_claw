@@ -1,0 +1,503 @@
+# Word MCP服务器配置
+
+server_name: word
+description: Word文档操作MCP服务器
+
+# 服务器启动配置
+command: python
+args:
+  - "mcp_servers/Office-Word-MCP-Server/word_mcp_server.py"
+env:
+  PYTHONPATH: "mcp_servers/Office-Word-MCP-Server"
+  MCP_TRANSPORT: "stdio"
+
+tools:
+  - name: create_document
+    description: 创建新的Word文档
+    parameters:
+      filename: string
+      title: string
+      author: string
+    example: {"function": "create_document", "parameters": {"filename": "report.docx", "title": "年度报告", "author": "张三"}}
+
+  - name: copy_document
+    description: 复制Word文档
+    parameters:
+      source_filename: string
+      destination_filename: string
+    example: {"function": "copy_document", "parameters": {"source_filename": "report.docx", "destination_filename": "report_copy.docx"}}
+
+  - name: get_document_info
+    description: 获取文档信息
+    parameters:
+      filename: string
+    example: {"function": "get_document_info", "parameters": {"filename": "report.docx"}}
+
+  - name: get_document_text
+    description: 获取文档文本
+    parameters:
+      filename: string
+    example: {"function": "get_document_text", "parameters": {"filename": "report.docx"}}
+
+  - name: get_document_outline
+    description: 获取文档大纲
+    parameters:
+      filename: string
+    example: {"function": "get_document_outline", "parameters": {"filename": "report.docx"}}
+
+  - name: list_available_documents
+    description: 列出可用的Word文档
+    parameters:
+      directory: string
+    example: {"function": "list_available_documents", "parameters": {"directory": "/"}}
+
+  - name: get_document_xml
+    description: 获取文档XML结构
+    parameters:
+      filename: string
+    example: {"function": "get_document_xml", "parameters": {"filename": "report.docx"}}
+
+  - name: insert_header_near_text
+    description: 在文本附近插入标题
+    parameters:
+      filename: string
+      target_text: string
+      header_title: string
+      position: string
+      header_style: string
+      target_paragraph_index: number
+    example: {"function": "insert_header_near_text", "parameters": {"filename": "report.docx", "target_text": "现有文本", "header_title": "新标题", "position": "after", "header_style": "Heading 2"}}
+
+  - name: insert_line_or_paragraph_near_text
+    description: 在文本附近插入行或段落
+    parameters:
+      filename: string
+      target_text: string
+      line_text: string
+      position: string
+      line_style: string
+      target_paragraph_index: number
+    example: {"function": "insert_line_or_paragraph_near_text", "parameters": {"filename": "report.docx", "target_text": "现有文本", "line_text": "新段落", "position": "after"}}
+
+  - name: insert_numbered_list_near_text
+    description: 在文本附近插入编号列表
+    parameters:
+      filename: string
+      target_text: string
+      list_items: array
+      position: string
+      target_paragraph_index: number
+      bullet_type: string
+    example: {"function": "insert_numbered_list_near_text", "parameters": {"filename": "report.docx", "target_text": "现有文本", "list_items": ["项目1", "项目2", "项目3"], "position": "after", "bullet_type": "number"}}
+
+  - name: add_heading
+    description: 添加标题
+    parameters:
+      filename: string
+      text: string
+      level: number
+      font_name: string
+      font_size: number
+      bold: boolean
+      italic: boolean
+      border_bottom: boolean
+    example: {"function": "add_heading", "parameters": {"filename": "report.docx", "text": "摘要", "level": 1, "font_name": "Arial", "font_size": 16, "bold": true}}
+
+  - name: add_paragraph
+    description: 添加段落
+    parameters:
+      filename: string
+      text: string
+      style: string
+      font_name: string
+      font_size: number
+      bold: boolean
+      italic: boolean
+      color: string
+    example: {"function": "add_paragraph", "parameters": {"filename": "report.docx", "text": "这是一个段落", "font_name": "Times New Roman", "font_size": 12}}
+
+  - name: add_picture
+    description: 添加图片
+    parameters:
+      filename: string
+      image_path: string
+      width: number
+    example: {"function": "add_picture", "parameters": {"filename": "report.docx", "image_path": "d:/web_claw/servers/image.jpg", "width": 300}}
+
+  - name: add_table
+    description: 添加表格
+    parameters:
+      filename: string
+      rows: number
+      cols: number
+      data: array
+    example: {"function": "add_table", "parameters": {"filename": "report.docx", "rows": 3, "cols": 2, "data": [["姓名", "年龄"], ["张三", "25"], ["李四", "30"]]}}
+
+  - name: add_page_break
+    description: 添加分页符
+    parameters:
+      filename: string
+    example: {"function": "add_page_break", "parameters": {"filename": "report.docx"}}
+
+  - name: delete_paragraph
+    description: 删除段落
+    parameters:
+      filename: string
+      paragraph_index: number
+    example: {"function": "delete_paragraph", "parameters": {"filename": "report.docx", "paragraph_index": 0}}
+
+  - name: search_and_replace
+    description: 搜索和替换文本
+    parameters:
+      filename: string
+      find_text: string
+      replace_text: string
+    example: {"function": "search_and_replace", "parameters": {"filename": "report.docx", "find_text": "旧文本", "replace_text": "新文本"}}
+
+  - name: create_custom_style
+    description: 创建自定义样式
+    parameters:
+      filename: string
+      style_name: string
+      bold: boolean
+      italic: boolean
+      font_size: number
+      font_name: string
+      color: string
+      base_style: string
+    example: {"function": "create_custom_style", "parameters": {"filename": "report.docx", "style_name": "自定义样式", "bold": true, "font_size": 14, "color": "FF0000"}}
+
+  - name: format_text
+    description: 格式化文本
+    parameters:
+      filename: string
+      paragraph_index: number
+      start_pos: number
+      end_pos: number
+      bold: boolean
+      italic: boolean
+      underline: boolean
+      color: string
+      font_size: number
+      font_name: string
+    example: {"function": "format_text", "parameters": {"filename": "report.docx", "paragraph_index": 0, "start_pos": 0, "end_pos": 5, "bold": true, "color": "FF0000"}}
+
+  - name: format_table
+    description: 格式化表格
+    parameters:
+      filename: string
+      table_index: number
+      has_header_row: boolean
+      border_style: string
+      shading: array
+    example: {"function": "format_table", "parameters": {"filename": "report.docx", "table_index": 0, "has_header_row": true, "border_style": "single"}}
+
+  - name: set_table_cell_shading
+    description: 设置表格单元格底纹
+    parameters:
+      filename: string
+      table_index: number
+      row_index: number
+      col_index: number
+      fill_color: string
+      pattern: string
+    example: {"function": "set_table_cell_shading", "parameters": {"filename": "report.docx", "table_index": 0, "row_index": 0, "col_index": 0, "fill_color": "4472C4"}}
+
+  - name: apply_table_alternating_rows
+    description: 应用表格交替行颜色
+    parameters:
+      filename: string
+      table_index: number
+      color1: string
+      color2: string
+    example: {"function": "apply_table_alternating_rows", "parameters": {"filename": "report.docx", "table_index": 0, "color1": "FFFFFF", "color2": "E6E6FA"}}
+
+  - name: highlight_table_header
+    description: 高亮表格表头
+    parameters:
+      filename: string
+      table_index: number
+      header_color: string
+      text_color: string
+    example: {"function": "highlight_table_header", "parameters": {"filename": "report.docx", "table_index": 0, "header_color": "4472C4", "text_color": "FFFFFF"}}
+
+  - name: merge_table_cells
+    description: 合并表格单元格
+    parameters:
+      filename: string
+      table_index: number
+      start_row: number
+      start_col: number
+      end_row: number
+      end_col: number
+    example: {"function": "merge_table_cells", "parameters": {"filename": "report.docx", "table_index": 0, "start_row": 0, "start_col": 0, "end_row": 0, "end_col": 1}}
+
+  - name: merge_table_cells_horizontal
+    description: 水平合并表格单元格
+    parameters:
+      filename: string
+      table_index: number
+      row_index: number
+      start_col: number
+      end_col: number
+    example: {"function": "merge_table_cells_horizontal", "parameters": {"filename": "report.docx", "table_index": 0, "row_index": 0, "start_col": 0, "end_col": 1}}
+
+  - name: merge_table_cells_vertical
+    description: 垂直合并表格单元格
+    parameters:
+      filename: string
+      table_index: number
+      col_index: number
+      start_row: number
+      end_row: number
+    example: {"function": "merge_table_cells_vertical", "parameters": {"filename": "report.docx", "table_index": 0, "col_index": 0, "start_row": 0, "end_row": 1}}
+
+  - name: set_table_cell_alignment
+    description: 设置表格单元格对齐
+    parameters:
+      filename: string
+      table_index: number
+      row_index: number
+      col_index: number
+      horizontal: string
+      vertical: string
+    example: {"function": "set_table_cell_alignment", "parameters": {"filename": "report.docx", "table_index": 0, "row_index": 0, "col_index": 0, "horizontal": "center", "vertical": "middle"}}
+
+  - name: set_table_alignment_all
+    description: 设置表格所有单元格对齐
+    parameters:
+      filename: string
+      table_index: number
+      horizontal: string
+      vertical: string
+    example: {"function": "set_table_alignment_all", "parameters": {"filename": "report.docx", "table_index": 0, "horizontal": "center", "vertical": "middle"}}
+
+  - name: protect_document
+    description: 保护文档
+    parameters:
+      filename: string
+      password: string
+    example: {"function": "protect_document", "parameters": {"filename": "report.docx", "password": "123456"}}
+
+  - name: unprotect_document
+    description: 解除文档保护
+    parameters:
+      filename: string
+      password: string
+    example: {"function": "unprotect_document", "parameters": {"filename": "report.docx", "password": "123456"}}
+
+  - name: add_footnote_to_document
+    description: 向文档添加脚注
+    parameters:
+      filename: string
+      paragraph_index: number
+      footnote_text: string
+    example: {"function": "add_footnote_to_document", "parameters": {"filename": "report.docx", "paragraph_index": 0, "footnote_text": "这是一个脚注"}}
+
+  - name: add_footnote_after_text
+    description: 在文本后添加脚注
+    parameters:
+      filename: string
+      search_text: string
+      footnote_text: string
+      output_filename: string
+    example: {"function": "add_footnote_after_text", "parameters": {"filename": "report.docx", "search_text": "需要脚注的文本", "footnote_text": "这是一个脚注"}}
+
+  - name: add_footnote_before_text
+    description: 在文本前添加脚注
+    parameters:
+      filename: string
+      search_text: string
+      footnote_text: string
+      output_filename: string
+    example: {"function": "add_footnote_before_text", "parameters": {"filename": "report.docx", "search_text": "需要脚注的文本", "footnote_text": "这是一个脚注"}}
+
+  - name: add_footnote_enhanced
+    description: 增强版添加脚注
+    parameters:
+      filename: string
+      paragraph_index: number
+      footnote_text: string
+      output_filename: string
+    example: {"function": "add_footnote_enhanced", "parameters": {"filename": "report.docx", "paragraph_index": 0, "footnote_text": "这是一个脚注"}}
+
+  - name: add_endnote_to_document
+    description: 向文档添加尾注
+    parameters:
+      filename: string
+      paragraph_index: number
+      endnote_text: string
+    example: {"function": "add_endnote_to_document", "parameters": {"filename": "report.docx", "paragraph_index": 0, "endnote_text": "这是一个尾注"}}
+
+  - name: customize_footnote_style
+    description: 自定义脚注样式
+    parameters:
+      filename: string
+      numbering_format: string
+      start_number: number
+      font_name: string
+      font_size: number
+    example: {"function": "customize_footnote_style", "parameters": {"filename": "report.docx", "numbering_format": "a, b, c", "start_number": 1}}
+
+  - name: delete_footnote_from_document
+    description: 从文档删除脚注
+    parameters:
+      filename: string
+      footnote_id: number
+      search_text: string
+      output_filename: string
+    example: {"function": "delete_footnote_from_document", "parameters": {"filename": "report.docx", "footnote_id": 1}}
+
+  - name: add_footnote_robust
+    description: 健壮版添加脚注
+    parameters:
+      filename: string
+      search_text: string
+      paragraph_index: number
+      footnote_text: string
+      validate_location: boolean
+      auto_repair: boolean
+    example: {"function": "add_footnote_robust", "parameters": {"filename": "report.docx", "search_text": "需要脚注的文本", "footnote_text": "这是一个脚注"}}
+
+  - name: validate_document_footnotes
+    description: 验证文档脚注
+    parameters:
+      filename: string
+    example: {"function": "validate_document_footnotes", "parameters": {"filename": "report.docx"}}
+
+  - name: delete_footnote_robust
+    description: 健壮版删除脚注
+    parameters:
+      filename: string
+      footnote_id: number
+      search_text: string
+      clean_orphans: boolean
+    example: {"function": "delete_footnote_robust", "parameters": {"filename": "report.docx", "footnote_id": 1}}
+
+  - name: get_paragraph_text_from_document
+    description: 获取文档段落文本
+    parameters:
+      filename: string
+      paragraph_index: number
+    example: {"function": "get_paragraph_text_from_document", "parameters": {"filename": "report.docx", "paragraph_index": 0}}
+
+  - name: find_text_in_document
+    description: 在文档中查找文本
+    parameters:
+      filename: string
+      text_to_find: string
+      match_case: boolean
+      whole_word: boolean
+    example: {"function": "find_text_in_document", "parameters": {"filename": "report.docx", "text_to_find": "查找的文本", "match_case": true}}
+
+  - name: convert_to_pdf
+    description: 转换为PDF
+    parameters:
+      filename: string
+      output_filename: string
+    example: {"function": "convert_to_pdf", "parameters": {"filename": "report.docx", "output_filename": "report.pdf"}}
+
+  - name: replace_paragraph_block_below_header
+    description: 替换标题下的段落块
+    parameters:
+      filename: string
+      header_text: string
+      new_paragraphs: array
+      detect_block_end_fn: string
+    example: {"function": "replace_paragraph_block_below_header", "parameters": {"filename": "report.docx", "header_text": "标题", "new_paragraphs": ["新段落1", "新段落2"]}}
+
+  - name: replace_block_between_manual_anchors
+    description: 替换手动锚点之间的块
+    parameters:
+      filename: string
+      start_anchor_text: string
+      new_paragraphs: array
+      end_anchor_text: string
+      match_fn: string
+      new_paragraph_style: string
+    example: {"function": "replace_block_between_manual_anchors", "parameters": {"filename": "report.docx", "start_anchor_text": "开始", "new_paragraphs": ["新段落1", "新段落2"], "end_anchor_text": "结束"}}
+
+  - name: get_all_comments
+    description: 获取所有评论
+    parameters:
+      filename: string
+    example: {"function": "get_all_comments", "parameters": {"filename": "report.docx"}}
+
+  - name: get_comments_by_author
+    description: 按作者获取评论
+    parameters:
+      filename: string
+      author: string
+    example: {"function": "get_comments_by_author", "parameters": {"filename": "report.docx", "author": "张三"}}
+
+  - name: get_comments_for_paragraph
+    description: 获取段落评论
+    parameters:
+      filename: string
+      paragraph_index: number
+    example: {"function": "get_comments_for_paragraph", "parameters": {"filename": "report.docx", "paragraph_index": 0}}
+
+  - name: set_table_column_width
+    description: 设置表格列宽
+    parameters:
+      filename: string
+      table_index: number
+      col_index: number
+      width: number
+      width_type: string
+    example: {"function": "set_table_column_width", "parameters": {"filename": "report.docx", "table_index": 0, "col_index": 0, "width": 100}}
+
+  - name: set_table_column_widths
+    description: 设置多个表格列宽
+    parameters:
+      filename: string
+      table_index: number
+      widths: array
+      width_type: string
+    example: {"function": "set_table_column_widths", "parameters": {"filename": "report.docx", "table_index": 0, "widths": [100, 200, 150]}}
+
+  - name: set_table_width
+    description: 设置表格宽度
+    parameters:
+      filename: string
+      table_index: number
+      width: number
+      width_type: string
+    example: {"function": "set_table_width", "parameters": {"filename": "report.docx", "table_index": 0, "width": 450}}
+
+  - name: auto_fit_table_columns
+    description: 自动调整表格列宽
+    parameters:
+      filename: string
+      table_index: number
+    example: {"function": "auto_fit_table_columns", "parameters": {"filename": "report.docx", "table_index": 0}}
+
+  - name: format_table_cell_text
+    description: 格式化表格单元格文本
+    parameters:
+      filename: string
+      table_index: number
+      row_index: number
+      col_index: number
+      text_content: string
+      bold: boolean
+      italic: boolean
+      underline: boolean
+      color: string
+      font_size: number
+      font_name: string
+    example: {"function": "format_table_cell_text", "parameters": {"filename": "report.docx", "table_index": 0, "row_index": 0, "col_index": 0, "text_content": "加粗文本", "bold": true}}
+
+  - name: set_table_cell_padding
+    description: 设置表格单元格边距
+    parameters:
+      filename: string
+      table_index: number
+      row_index: number
+      col_index: number
+      top: number
+      bottom: number
+      left: number
+      right: number
+      unit: string
+    example: {"function": "set_table_cell_padding", "parameters": {"filename": "report.docx", "table_index": 0, "row_index": 0, "col_index": 0, "top": 5, "bottom": 5, "left": 5, "right": 5}}

@@ -1,0 +1,45 @@
+# Python 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境 - Windows下常见的虚拟环境目录
+venv/
+env/
+ENV/
+.venv/
+virtualenv/
+.virtualenv/
+
+# PyCharm等IDE可能创建的虚拟环境
+venv-win/
+env-win/
+
+# Pipenv
+Pipfile.lock
+.venv/
+
+# Conda
+.conda/
+miniconda/
+miniconda3/
+anaconda/
+anaconda3/
+
+# Windows系统文件（可选）
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE相关（可选）
+.vscode/
+.idea/
+*.sublime-*
+
+# 项目相关（根据需要添加）
+*.log
+*.pot
+*.pyc
+local_settings.py

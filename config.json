@@ -1,0 +1,19 @@
+{
+  "modes": [
+    {
+      "label": "🦞养龙虾",
+      "prompt_file": "养龙虾.yml",
+      "save": true
+    },
+    {
+      "label": "🐉龙虾出征",
+      "prompt_file": "龙虾出征.yml",
+      "save": true
+    },
+    {
+      "label": "🚫 无",
+      "text": "",
+      "save": false
+    }
+  ]
+}

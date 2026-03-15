@@ -1,0 +1,24 @@
+# PDF Reader MCP服务器配置
+
+server_name: pdf
+
+description: PDF文件读取MCP服务器
+
+# 服务器启动配置
+command: python
+args:
+  - "mcp_servers/pdf-reader-mcp/src/server.py"
+env: {}
+
+tools:
+  - name: read_local_pdf
+    description: 读取本地PDF文件的文本内容
+    parameters:
+      path: string
+    example: {"function": "read_local_pdf", "parameters": {"path": "/pdfs/document.pdf"}}
+
+  - name: read_pdf_url
+    description: 从URL读取PDF文件的文本内容
+    parameters:
+      url: string
+    example: {"function": "read_pdf_url", "parameters": {"url": "https://example.com/document.pdf"}}

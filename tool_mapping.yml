@@ -1,0 +1,56 @@
+# 工具映射配置
+inline_tools:
+  - name: send_mcp_tool_documentation
+    description: 获取MCP工具的说明文档
+    parameters:
+      tool_name: string
+    
+  # 记忆系统工具
+  - name: get_memory_tool_documentation
+    description: 获取记忆工具的说明文档
+    parameters: {}
+    
+  - name: retrieve_rules
+    description: 检索相关规则
+    parameters:
+      domain: string
+      topic: string
+      top_k: number
+    
+  - name: add_rule
+    description: 添加新规则
+    parameters:
+      file_name: string
+      domain: string
+      topic: string
+      content: string
+    
+  - name: use_rule
+    description: 记录规则使用
+    parameters:
+      file_name: string
+    
+  - name: delete_rule
+    description: 删除规则
+    parameters:
+      file_name: string
+    
+  - name: list_domains
+    description: 列出所有域
+    parameters: {}
+    
+  - name: list_topics
+    description: 列出指定域的所有主题
+    parameters:
+      domain: string
+
+  - name: record
+    description: 记录短期记忆
+    parameters:
+      content: string
+
+  - name: read_record
+    description: 读取短期记忆
+    parameters: {}
+
+mcp_tools: []

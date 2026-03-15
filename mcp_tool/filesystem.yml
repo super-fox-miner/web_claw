@@ -1,0 +1,60 @@
+# 文件系统MCP服务器配置
+
+server_name: filesystem
+description: 文件系统操作MCP服务器
+
+# 服务器启动配置
+command: python
+args:
+  - "mcp_servers/filesystem_server.py"
+  - "filesystem"
+env: {}
+
+tools:
+  - name: write_file
+    description: 创建新文件或覆盖现有文件
+    parameters:
+      path: string
+      content: string
+    example: {"function": "write_file", "parameters": {"path": "/test.txt", "content": "hello world"}}
+
+  - name: append_file
+    description: 追加内容到文件末尾
+    parameters:
+      path: string
+      content: string
+    example: {"function": "append_file", "parameters": {"path": "/test.txt", "content": "\nappended content"}}
+
+  - name: delete_content
+    description: 删除文件中指定位置的内容（从start_pos到end_pos，不包含end_pos）
+    parameters:
+      path: string
+      start_pos: number
+      end_pos: number
+    example: {"function": "delete_content", "parameters": {"path": "/test.txt", "start_pos": 5, "end_pos": 10}}
+
+  - name: delete_lines
+    description: 删除文件中指定行范围的内容（行号从1开始，包含start_line和end_line）
+    parameters:
+      path: string
+      start_line: number
+      end_line: number
+    example: {"function": "delete_lines", "parameters": {"path": "/test.txt", "start_line": 2, "end_line": 5}}
+
+  - name: read_file
+    description: 读取文件的全部内容
+    parameters:
+      path: string
+    example: {"function": "read_file", "parameters": {"path": "/test.txt"}}
+
+  - name: create_directory
+    description: 创建新目录或确保其存在
+    parameters:
+      path: string
+    example: {"function": "create_directory", "parameters": {"path": "/test"}}
+
+  - name: list_directory
+    description: 列出目录内容
+    parameters:
+      path: string
+    example: {"function": "list_directory", "parameters": {"path": "/"}}
