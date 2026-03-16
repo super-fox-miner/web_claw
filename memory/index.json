@@ -30,34 +30,6 @@
       "priority": "medium",
       "related_tools": [],
       "tags": []
-    },
-    "mandatory-greeting-20260313.md": {
-      "domain": "global",
-      "topic": "behavior",
-      "author": "system",
-      "created_at": "2026-03-13T12:00:00Z",
-      "updated_at": "2026-03-13T23:53:19.146309Z",
-      "references": 2,
-      "activation": 0.7,
-      "priority": "high",
-      "related_tools": [],
-      "tags": [
-        "greeting",
-        "behavior",
-        "response-style"
-      ]
-    },
-    "rule-loading-protocol-20260313.md": {
-      "domain": "best-practice",
-      "topic": "guidelines",
-      "author": "system",
-      "created_at": "2026-03-13T23:34:28.249352Z",
-      "updated_at": "2026-03-13T23:34:28.249352Z",
-      "references": 0,
-      "activation": 0.5,
-      "priority": "medium",
-      "related_tools": [],
-      "tags": []
     }
   },
   "domains": [
@@ -88,5 +60,5 @@
       "guidelines"
     ]
   },
-  "last_updated": "2026-03-13T23:53:19.146317Z"
+  "last_updated": "2026-03-16T22:40:33.137730Z"
 }

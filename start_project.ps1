@@ -172,43 +172,59 @@ if (-not $pipUpgraded) {
 # Check and install dependencies
 Write-Host "Checking dependencies..." -ForegroundColor Cyan
 try {
+    # Get all dependencies from requirements.txt
     $deps = Get-Content "requirements.txt" | Where-Object { $_ -notmatch '^#' -and $_ -notmatch '^$' }
-    $allInstalled = $true
-    foreach ($dep in $deps) {
-        $depName = $dep.Split('=')[0].Split('>')[0].Split('<')[0].Trim()
-        $result = & $venvPython -m pip show $depName 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            $allInstalled = $false
-            break
-        }
-    }
-    if (-not $allInstalled) {
-        Write-Host "Installing dependencies..." -ForegroundColor Cyan
-        $depMirrors = @(
-            "https://pypi.tuna.tsinghua.edu.cn/simple",
-            "https://mirrors.aliyun.com/pypi/simple",
-            "https://pypi.mirrors.ustc.edu.cn/simple",
-            "https://pypi.doubanio.com/simple",
-            "https://pypi.org/simple"
-        )
-        $depsInstalled = $false
-        foreach ($mirror in $depMirrors) {
-            try {
-                Write-Host "Trying mirror: $mirror" -ForegroundColor Cyan
-                $hostName = ([System.Uri]$mirror).Host
-                & $venvPython -m pip install -r requirements.txt -i $mirror --trusted-host $hostName
-                $depsInstalled = $true
-                Write-Host "Dependencies installed successfully" -ForegroundColor Green
-                break
-            } catch {
-                Write-Host "Mirror $mirror failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    
+    if ($deps.Count -gt 0) {
+        # Get all installed packages at once (much faster than checking individually)
+        $installedPackages = & $venvPython -m pip list --format=freeze 2>$null
+        $installedPackagesHash = @{}
+        foreach ($pkg in $installedPackages) {
+            if ($pkg -match '^([^=]+)=') {
+                $installedPackagesHash[$matches[1].ToLower()] = $true
             }
         }
-        if (-not $depsInstalled) {
-            Write-Host "Failed to install dependencies, please check network or install manually" -ForegroundColor Red
+        
+        # Check if all dependencies are installed
+        $allInstalled = $true
+        foreach ($dep in $deps) {
+            $depName = $dep.Split('=')[0].Split('>')[0].Split('<')[0].Trim().ToLower()
+            if (-not $installedPackagesHash.ContainsKey($depName)) {
+                $allInstalled = $false
+                break
+            }
+        }
+        
+        if (-not $allInstalled) {
+            Write-Host "Installing dependencies..." -ForegroundColor Cyan
+            $depMirrors = @(
+                "https://pypi.tuna.tsinghua.edu.cn/simple",
+                "https://mirrors.aliyun.com/pypi/simple",
+                "https://pypi.mirrors.ustc.edu.cn/simple",
+                "https://pypi.doubanio.com/simple",
+                "https://pypi.org/simple"
+            )
+            $depsInstalled = $false
+            foreach ($mirror in $depMirrors) {
+                try {
+                    Write-Host "Trying mirror: $mirror" -ForegroundColor Cyan
+                    $hostName = ([System.Uri]$mirror).Host
+                    & $venvPython -m pip install -r requirements.txt -i $mirror --trusted-host $hostName
+                    $depsInstalled = $true
+                    Write-Host "Dependencies installed successfully" -ForegroundColor Green
+                    break
+                } catch {
+                    Write-Host "Mirror $mirror failed: $($_.Exception.Message)" -ForegroundColor Yellow
+                }
+            }
+            if (-not $depsInstalled) {
+                Write-Host "Failed to install dependencies, please check network or install manually" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "All dependencies are already installed" -ForegroundColor Green
         }
     } else {
-        Write-Host "All dependencies are already installed" -ForegroundColor Green
+        Write-Host "No dependencies found in requirements.txt" -ForegroundColor Green
     }
 } catch {
     Write-Host "Error checking dependencies: $($_.Exception.Message)" -ForegroundColor Yellow

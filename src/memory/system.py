@@ -10,30 +10,20 @@ class MemorySystem:
     VALID_DOMAINS = [
         "global",         # 全局规则（所有任务都会执行）
         "code",           # 代码相关
-        "document",       # 文档处理
-        "data",           # 数据处理
+        "file",           # 编辑器文本处理
         "filesystem",     # 文件系统操作
         "word",           # Word文档处理
         "excel",          # Excel表格处理
-        "format",         # 格式设置
-        "security",       # 安全性相关
-        "performance",    # 性能优化
-        "best-practice"   # 最佳实践
     ]
     
     # 固定的topic选项（按domain分组）
     VALID_TOPICS = {
         "global": ["greeting", "response-style", "behavior", "personality"],
         "code": ["style", "structure", "optimization", "debugging", "testing"],
-        "document": ["formatting", "layout", "template", "conversion", "editing"],
-        "data": ["processing", "analysis", "validation", "transformation", "export"],
+        "file": ["formatting", "layout", "template", "conversion", "editing"],
         "filesystem": ["file-operation", "directory-management", "path-handling", "permissions"],
         "word": ["document-creation", "formatting", "table-handling", "image-insertion", "header-footer"],
-        "excel": ["worksheet-management", "data-entry", "formula-application", "chart-creation", "formatting"],
-        "format": ["text-format", "number-format", "date-format", "currency-format"],
-        "security": ["authentication", "authorization", "encryption", "validation"],
-        "performance": ["optimization", "caching", "memory-management", "speed-improvement"],
-        "best-practice": ["guidelines", "standards", "conventions", "recommendations"]
+        "excel": ["worksheet-management", "data-entry", "formula-application", "chart-creation", "formatting"]
     }
 
     def __init__(self, memory_dir: str = "memory"):
@@ -293,10 +283,21 @@ class MemorySystem:
         index = self._load_index()
         return index["domains"]
     
-    def list_topics(self, domain: str) -> List[str]:
-        """列出指定域的所有主题"""
+    def list_topics(self, domain: str) -> Dict[str, Any]:
+        """列出指定域的所有主题和文件名"""
         index = self._load_index()
-        return index["topics"].get(domain, [])
+        topics = index["topics"].get(domain, [])
+        
+        # 收集该域下的所有文件名
+        filenames = []
+        for file_name, rule_data in index["rules"].items():
+            if rule_data.get("domain") == domain:
+                filenames.append(file_name)
+        
+        return {
+            "topics": topics,
+            "filenames": filenames
+        }
     
     def record(self, content: str) -> Dict[str, Any]:
         """记录短期记忆"""
@@ -376,9 +377,9 @@ class MemorySystem:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def get_memory_tool_documentation(self) -> Dict[str, Any]:
+    def get_memory_tool_documentation(self, action: Optional[str] = None) -> Dict[str, Any]:
         """获取记忆工具说明文档"""
-        return {
+        full_docs = {
             "retrieve_rules": {
                 "description": "检索相关规则",
                 "parameters": {
@@ -413,12 +414,12 @@ class MemorySystem:
                 "example": {"function": "delete_rule", "parameters": {"file_name": "code-style.md"}}
             },
             "list_domains": {
-                "description": "列出所有域",
+                "description": "列出所有域。域类型说明：\n- global: 全局规则（所有任务都会执行）\n- code: 代码相关\n- file: 编辑器文本处理\n- filesystem: 文件系统操作\n- word: Word文档处理\n- excel: Excel表格处理\n",
                 "parameters": {},
                 "example": {"function": "list_domains", "parameters": {}}
             },
             "list_topics": {
-                "description": "列出指定域的所有主题",
+                "description": "列出指定域的所有主题和对应的文件名",
                 "parameters": {
                     "domain": f"规则领域（字符串，必需，固定选项：{', '.join(self.VALID_DOMAINS)}"
                 },
@@ -437,3 +438,18 @@ class MemorySystem:
                 "example": {"function": "read_record", "parameters": {}}
             }
         }
+        
+        if action == "add":
+            return {
+                "add_rule": full_docs["add_rule"],
+                "delete_rule": full_docs["delete_rule"]
+            }
+        elif action == "use":
+            return {
+                "retrieve_rules": full_docs["retrieve_rules"],
+                "use_rule": full_docs["use_rule"],
+                "list_domains": full_docs["list_domains"],
+                "list_topics": full_docs["list_topics"]
+            }
+        else:
+            return full_docs
