@@ -1,44 +1,13 @@
 {
-  "rules": {
-    "code-style.md": {
-      "domain": "code",
-      "topic": "style",
-      "author": "system",
-      "created_at": "2026-03-13T14:00:00Z",
-      "updated_at": "2026-03-13T14:00:00Z",
-      "references": 0,
-      "activation": 0.5,
-      "priority": "high",
-      "related_tools": [
-        "write_file",
-        "read_file"
-      ],
-      "tags": [
-        "python",
-        "coding",
-        "style-guide"
-      ]
-    },
-    "word-document-format.md": {
-      "domain": "document",
-      "topic": "word-formatting",
-      "author": "system",
-      "created_at": "2026-03-13T14:22:53.560978Z",
-      "updated_at": "2026-03-13T14:22:53.560978Z",
-      "references": 0,
-      "activation": 0.5,
-      "priority": "medium",
-      "related_tools": [],
-      "tags": []
-    }
-  },
+  "rules": {},
   "domains": [
     "code",
     "document",
     "word",
     "format",
     "global",
-    "best-practice"
+    "best-practice",
+    "filesystem"
   ],
   "topics": {
     "code": [
@@ -54,11 +23,15 @@
       "text-format"
     ],
     "global": [
-      "behavior"
+      "behavior",
+      "response-style"
     ],
     "best-practice": [
       "guidelines"
+    ],
+    "filesystem": [
+      "file-operation"
     ]
   },
-  "last_updated": "2026-03-16T22:40:33.137730Z"
+  "last_updated": "2026-03-17T23:41:25.195906Z"
 }

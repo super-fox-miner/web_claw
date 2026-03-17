@@ -299,9 +299,13 @@ class MemorySystem:
             "filenames": filenames
         }
     
-    def record(self, content: str) -> Dict[str, Any]:
+    def record(self, content: Any) -> Dict[str, Any]:
         """记录短期记忆"""
         try:
+            # 如果 content 是字典或列表，转换为 JSON 字符串
+            if isinstance(content, (dict, list)):
+                content = json.dumps(content, ensure_ascii=False, indent=2)
+            
             # 加载短期记忆
             memory = {"records": [], "last_updated": datetime.now().isoformat() + "Z"}
             if os.path.exists(self.short_memory_file):
@@ -322,8 +326,8 @@ class MemorySystem:
             }
             memory["records"].append(record)
             
-            # 限制最多10条记录，超过时删除最旧的一条
-            if len(memory["records"]) > 10:
+            # 限制最多20条记录，超过时删除最旧的一条
+            if len(memory["records"]) > 20:
                 memory["records"].pop(0)
             
             memory["last_updated"] = datetime.now().isoformat() + "Z"
@@ -453,3 +457,35 @@ class MemorySystem:
             }
         else:
             return full_docs
+
+    def help(self) -> Dict[str, Any]:
+        """获取帮助信息，指导如何查看MCP工具、记忆规则和记录"""
+        help_text = """=== 系统帮助指南 ===
+
+【查看MCP工具】
+调用 send_mcp_tool_documentation 函数，参数：
+  - tool_name: 工具名称（可选，不填则返回所有工具）【filesystem , word, excel,pdf】
+示例：{"function": "send_mcp_tool_documentation", "parameters": {"tool_name": ""}}
+
+【查看记忆规则工具】
+调用 get_memory_tool_documentation 函数，参数：
+  - action: 操作类型（可选）
+    - "add": 返回 add_rule 和 delete_rule 用法
+    - "use": 返回 retrieve_rules, use_rule, list_domains, list_topics 用法
+    - 不填: 返回所有工具文档
+示例：{"function": "get_memory_tool_documentation", "parameters": {"action": "use"}}
+
+【获取记录】
+调用 read_record 函数，无需参数
+示例：{"function": "read_record", "parameters": {}}
+
+【其他常用操作】
+- 记录短期记忆: record 函数
+- 检索规则: retrieve_rules 函数
+- 添加规则: add_rule 函数
+- 使用规则: use_rule 函数
+- 删除规则: delete_rule 函数
+- 列出所有域: list_domains 函数
+- 列出域下主题和文件: list_topics 函数
+"""
+        return {"success": True, "output": help_text}

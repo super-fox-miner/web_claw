@@ -45,12 +45,16 @@ inline_tools:
       domain: string
 
   - name: record
-    description: 记录短期记忆
+    description: 记录短期记忆，可以接受字符串或对象（会自动转换为JSON）
     parameters:
-      content: string
+      content: any
 
   - name: read_record
     description: 读取短期记忆
+    parameters: {}
+
+  - name: help
+    description: 获取系统帮助信息，指导如何查看MCP工具、记忆规则和记录
     parameters: {}
 
 mcp_tools: []
