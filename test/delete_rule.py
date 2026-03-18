@@ -29,13 +29,16 @@ def main():
     # 收集所有规则
     all_rules = []
     for domain in domains:
-        rules = memory.retrieve_rules(domain=domain, top_k=100)
-        for rule in rules:
-            all_rules.append({
-                "file": rule["file"],
-                "domain": rule["domain"],
-                "topic": rule["topic"]
-            })
+        rule_files = memory.retrieve_rules(domain=domain, top_k=100)
+        for rule_file in rule_files:
+            # 获取规则详细信息
+            index = memory._load_index()
+            if rule_file in index["rules"]:
+                rule_data = index["rules"][rule_file]
+                all_rules.append({
+                    "file": rule_file,
+                    "domain": rule_data.get("domain", "unknown")
+                })
     
     if not all_rules:
         print("当前没有规则文件")
@@ -53,7 +56,7 @@ def main():
     
     print("当前规则文件列表:")
     for i, rule in enumerate(unique_rules, 1):
-        print(f"  {i}. {rule['file']} (domain: {rule['domain']}, topic: {rule['topic']})")
+        print(f"  {i}. {rule['file']} (domain: {rule['domain']})")
     print()
     
     # 交互式选择

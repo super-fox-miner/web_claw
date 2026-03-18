@@ -14,6 +14,11 @@
       "label": "🚫 无",
       "text": "",
       "save": true
+    },
+    {
+      "label": "关闭互动",
+      "text": "",
+      "save": false
     }
   ]
 }

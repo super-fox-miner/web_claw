@@ -10,51 +10,35 @@ inline_tools:
     description: 获取记忆工具的说明文档
     parameters: {}
     
-  - name: retrieve_rules
-    description: 检索相关规则
+  - name: query_memory
+    description: 基于用户需求查询相关规则
     parameters:
-      domain: string
-      topic: string
+      query: string
       top_k: number
+      filters: object
     
   - name: add_rule
     description: 添加新规则
     parameters:
-      file_name: string
-      domain: string
-      topic: string
+      rule_name: string
       content: string
-    
-  - name: use_rule
-    description: 记录规则使用
-    parameters:
-      file_name: string
+      domain: string
+      tags: array
     
   - name: delete_rule
     description: 删除规则
     parameters:
-      file_name: string
+      rule_id: string
     
-  - name: list_domains
-    description: 列出所有域
-    parameters: {}
-    
-  - name: list_topics
-    description: 列出指定域的所有主题
-    parameters:
-      domain: string
-
   - name: record
-    description: 记录短期记忆，可以接受字符串或对象（会自动转换为JSON）
+    description: 记录任务进度
     parameters:
-      content: any
-
-  - name: read_record
-    description: 读取短期记忆
-    parameters: {}
+      task_chain: string
+      current_task: string
+      next_task: string
 
   - name: help
-    description: 获取系统帮助信息，指导如何查看MCP工具、记忆规则和记录
+    description: 帮助函数，输出指定代码片段
     parameters: {}
 
 mcp_tools: []
