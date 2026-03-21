@@ -40,6 +40,24 @@ async def execute_function_async(function_call: Dict[str, Any]) -> Dict[str, Any
 
 async def process_function_call_async(content: str) -> Optional[Dict[str, Any]]:
     try:
+        # 处理 <function=xxx>{...}</function> 格式
+        function_match = re.search(r'<function=(\w+)>(.*?)</function>', content, re.DOTALL)
+        if function_match:
+            function_name = function_match.group(1)
+            parameters_str = function_match.group(2)
+            try:
+                parameters = json.loads(parameters_str)
+                function_call = {
+                    "function": function_name,
+                    "parameters": parameters
+                }
+                logger.info("解析到function call:")
+                logger.info(json.dumps(function_call, indent=2))
+                return await execute_function_async(function_call)
+            except json.JSONDecodeError:
+                logger.error(f"参数解析失败：{parameters_str}")
+        
+        # 处理 ```json 格式
         json_match = re.search(r'```json\s*(.*?)\s*```', content, re.DOTALL)
         if json_match:
             function_call = json.loads(json_match.group(1))
@@ -47,6 +65,7 @@ async def process_function_call_async(content: str) -> Optional[Dict[str, Any]]:
             logger.info(json.dumps(function_call, indent=2))
             return await execute_function_async(function_call)
         
+        # 处理直接的JSON对象格式
         json_match = re.search(r'\{\s*"function"\s*:\s*".*?"\s*,\s*"parameters"\s*:\s*\{.*?\}\s*\}', content, re.DOTALL)
         if json_match:
             function_call = json.loads(json_match.group(0))

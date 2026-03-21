@@ -39,7 +39,7 @@ def send_mcp_tool_documentation(tool_name=None):
     发送MCP工具的说明文档
     如果指定了tool_name，则发送特定工具的说明文档
     如果指定的是服务器名称，则发送该服务器的所有工具说明文档
-    否则发送所有工具的说明文档
+    否则罗列可输入的参数有哪些
     """
     if tool_name:
         # 首先尝试查找工具
@@ -56,4 +56,25 @@ def send_mcp_tool_documentation(tool_name=None):
         # 既不是工具名称也不是服务器名称
         return f"未找到工具或服务器: {tool_name}"
     else:
-        return get_mcp_tools()
+        # 罗列可输入的参数
+        mcp_tools = get_mcp_tools()
+        server_names = []
+        tool_names = []
+        
+        for server in mcp_tools:
+            server_name = server.get("server_name")
+            if server_name:
+                server_names.append(server_name)
+            
+            for tool in server.get("tools", []):
+                tool_name = tool.get("name")
+                if tool_name:
+                    tool_names.append(tool_name)
+        
+        result = {
+            "available_servers": server_names,
+            "available_tools": tool_names,
+            "message": "请输入服务器名称或工具名称作为参数，可获取可用工具列表或者工具说明文档"
+        }
+        
+        return result

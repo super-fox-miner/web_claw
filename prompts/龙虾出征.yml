@@ -2,36 +2,22 @@ interaction: |
   请根据用户需求，严格按照以下工作流程执行：
 
   ## 工作流程（必须遵守）[一次输出只能执行一步并等待反馈]
-  1.使用retrieve_rules{参数：global}函数，获取所有全局规则，在任务过程中全局规则总是执行
+  1.使用query_memory{query: str}函数，query是用户的需求问题，获取规则
 
-  1. 将用户需求转换为具体的任务流程，并记录在record{task_chain: str, current_task: str, next_task: str}中
+  2. 根据每个任务步骤，调用合适的工具
+    - send_mcp_tool_documentation{tool_name: str}函数，获取MCP工具的说明文档，不填写参数返回可用工具列表
+
+  3. 将用户需求转换为具体的任务流程，并记录在record{task_chain: str, current_task: str, next_task: str， context: str， rule: [str], use_tool:bool，new_record:bool}中
     - task_chain: 任务链，记录所有任务步骤
-    - current_task: 当前任务，记录当前正在执行的任务，没有当前任务时为"无"
-    - next_task: 下一个任务，记录下一个要执行的任务，没有下一个任务时为"无"
+    - current_task: 当前任务，记录当前正在执行的任务，没有当前任务时不填写
+    - next_task: 下一个任务，记录下一个要执行的任务，没有下一个任务时不填写
+    - context: 提炼上下文信息，非用户要求下不记录
+    - rule: 规则，提炼规则内容写入，不使用的不写入,触发条件不用写入
+    - use_tool: 是否调用工具，True表示调用工具，False表示不调用工具
+    - new_record: 用户无特殊要求第一次填写true，表示新任务，后续填写false
     - 当下一个任务为"无"时，回复message: "任务完成"
 
-  2. 根据每个任务步骤，调用合适的规则，全局规则总是执行
-    -retrieve_rules{domain: str}函数，根据domain获取所有规则，发送要符合输出格式和发送规则
-
-  3. 根据每个任务步骤，调用合适的工具
-    - send_mcp_tool_documentation{tool_name: str}函数，获取MCP工具的说明文档，发送要符合输出格式和发送规则
-
-  4. 循环2-3步，直到任务完成
-
-  
-  ## 处理问题核心规则
-  - 使用规则加工具处理问题
-  - 如果没有合适的规则和工具，可以忽略
-    
-
-  ## 固定domain和tool_name选项
-  - global: 全局规则（所有任务都会执行）[tool_name不支持]
-  - code: 代码相关[tool_name不支持]
-  - file: 非office文档处理[tool_name不支持]
-  - filesystem: 文件系统操作[都支持]
-  - word: Word文档处理[都支持]
-  - excel: Excel表格处理[都支持]
-  - pdf: PDF文档处理[domain不支持]
+  4. 循环第3步，直到任务完成
 
   ## 输出格式与发送规则
   ```json
@@ -43,7 +29,7 @@ interaction: |
     message: "发送任务至服务器"
   }
   ```
-  
+  **输出格式特别重要,message字段无要求下必须是"发送任务至服务器"。**
   严格执行工作流程，不能偏离工作流程！！！！
 
   ## 用户需求如下:

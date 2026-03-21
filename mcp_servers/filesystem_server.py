@@ -8,11 +8,8 @@ import time
 import threading
 from fastmcp import FastMCP
 
-# 添加项目根目录到Python路径
+# 添加项目根目录到 Python 路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-# 导入设置
-from src.utils.settings import settings
 
 # 文件锁字典，用于实现并发控制
 file_locks = {}
@@ -88,26 +85,44 @@ def get_file_lock(file_path):
 class FilesystemMCPServer:
     def __init__(self, server_name):
         self.server_name = server_name
-        self.base_dir = settings.BASE_DIR
         self.mcp = FastMCP("Filesystem Server")
+        # 加载环境变量
+        self.base_dir = self._load_base_dir()
+        
+    def _load_base_dir(self):
+        """从.env文件加载BASE_DIR"""
+        env_file = os.path.join(os.path.dirname(__file__), '..', '.env')
+        if os.path.exists(env_file):
+            with open(env_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        key, value = line.split('=', 1)
+                        if key == 'BASE_DIR':
+                            return value.strip()
+        # 默认使用当前工作目录
+        return os.getcwd()
         
     def resolve_path(self, path, operation):
         """解析路径，确保在允许的目录内并具有相应权限"""
-        # 如果路径是绝对路径，检查是否在base_dir内
-        if os.path.isabs(path):
-            normalized_path = os.path.normpath(path)
-            normalized_base = os.path.normpath(self.base_dir)
-            if not normalized_path.startswith(normalized_base):
-                raise PermissionError(f"权限不足：文件路径 {path} 超出允许范围")
-            return normalized_path
+        # 简化路径解析，使用.env中的BASE_DIR
+        if path.startswith('/'):
+            # 移除开头的斜杠
+            path = path[1:]
+        # 使用.env中配置的BASE_DIR
+        base_dir = self.base_dir
+        # 构建完整路径
+        full_path = os.path.join(base_dir, path)
+        # 规范化路径
+        full_path = os.path.normpath(full_path)
         
-        # 如果路径以/开头，去掉开头的/并连接到base_dir
-        if path.startswith("/"):
-            relative_path = path[1:]
-            return os.path.join(self.base_dir, relative_path)
+        # 恢复安全检查 - 确保路径在允许范围内
+        normalized_path = os.path.normpath(full_path)
+        normalized_base = os.path.normpath(base_dir)
+        if not normalized_path.startswith(normalized_base):
+            raise PermissionError(f"权限不足：文件路径 {path} 超出允许范围")
         
-        # 如果是相对路径，直接连接到base_dir
-        return os.path.join(self.base_dir, path)
+        return full_path
         
     def register_tools(self):
         """注册所有工具"""

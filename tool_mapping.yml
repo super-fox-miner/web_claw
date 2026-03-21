@@ -36,9 +36,18 @@ inline_tools:
       task_chain: string
       current_task: string
       next_task: string
+      context: string
+      rule: array
+      tool: array
+      use_tool: boolean
+      new_record: boolean
 
   - name: help
     description: 帮助函数，输出指定代码片段
+    parameters: {}
+  
+  - name: list_rule
+    description: 列出所有规则及其ID
     parameters: {}
 
 mcp_tools: []

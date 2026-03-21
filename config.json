@@ -12,7 +12,7 @@
     },
     {
       "label": "🚫 无",
-      "text": "",
+      "prompt_file": "用户输出.yml",
       "save": true
     },
     {

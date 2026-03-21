@@ -46,5 +46,6 @@ local_settings.py
 docs/记忆系统集成报告.md
 docs/新需求.md
 docs/预设流程.md
-/memory/rules
-/memory/short_memory.json
+docs/memory_system_improvement.md
+memory
+models

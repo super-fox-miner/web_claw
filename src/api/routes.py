@@ -2,11 +2,15 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 import asyncio
 from src.config.loader import load_config
 from src.functions.executor import process_function_call_async, execute_function_async
+from src.memory.system import MemorySystem
 
 from src.api.connection_manager import manager
 from src.utils.logger import logger
 
 router = APIRouter()
+
+# 初始化记忆系统
+memory_system = MemorySystem()
 
 
 @router.get("/health")
@@ -17,6 +21,28 @@ def get_health():
 @router.get("/api/config")
 def get_config():
     return load_config()
+
+
+@router.get("/api/rules")
+def get_rules():
+    """获取所有规则列表"""
+    try:
+        rules = memory_system.list_rule()
+        return rules
+    except Exception as e:
+        logger.error(f"获取规则列表失败: {str(e)}")
+        return {"error": str(e)}
+
+
+@router.delete("/api/rules/{rule_id}")
+def delete_rule(rule_id: str):
+    """删除指定规则"""
+    try:
+        result = memory_system.delete_rule(rule_id)
+        return result
+    except Exception as e:
+        logger.error(f"删除规则失败: {str(e)}")
+        return {"error": str(e)}
 
 
 @router.websocket("/ws")

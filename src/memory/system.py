@@ -24,14 +24,21 @@ class MemorySystem:
     
     def _init_vector_store(self):
         """初始化向量存储"""
+        # 确保向量存储目录存在
+        vector_store_dir = os.path.join(self.memory_dir, "vector_store")
+        os.makedirs(vector_store_dir, exist_ok=True)
+        
         # 初始化ChromaDB客户端
-        self.chroma_client = chromadb.Client(Settings(
-            persist_directory=os.path.join(self.memory_dir, "vector_store"),
-            anonymized_telemetry=False
-        ))
+        self.chroma_client = chromadb.PersistentClient(
+            path=vector_store_dir,
+            settings=Settings(
+                anonymized_telemetry=False
+            )
+        )
         
         # 初始化嵌入模型
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        embedding_model_path = os.getenv('EMBEDDING_MODEL_PATH', './models/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+        self.embedding_model = SentenceTransformer(embedding_model_path)
         
         # 创建或获取向量集合
         self.vector_collection = self.chroma_client.get_or_create_collection(
@@ -135,38 +142,60 @@ class MemorySystem:
         except Exception as e:
             return {"success": False, "error": f"Failed to delete rule: {str(e)}"}
     
-    def record(self, task_chain: str, current_task: str, next_task: str) -> Dict[str, Any]:
+    # 全局计数器
+    record_count = 0
+    
+    def record(self, task_chain: str = "", current_task: str = "无", next_task: str = "无", context: str = "无", rule: list = [], use_tool: bool = None, new_record: bool = False) -> Dict[str, Any]:
         """记录任务进度"""
         try:
+            # 检查use_tool是否为空
+            if use_tool is None:
+                return {"success": False, "error": "use_tool不能为空"}
+            
+            # 增加全局计数器
+            MemorySystem.record_count += 1
+            # 计数器到14就清零
+            if MemorySystem.record_count >= 14:
+                MemorySystem.record_count = 0
+            
             # 创建任务记录
             task_record = {
                 "task_chain": task_chain,
                 "current_task": current_task,
-                "next_task": next_task
+                "next_task": next_task,
+                "context": context,
+                "rule": rule,
+                "use_tool": use_tool
             }
             
-            # 加载短期记忆
-            memory = {"records": [], "last_updated": datetime.now().isoformat() + "Z"}
-            if os.path.exists(self.short_memory_file):
-                try:
-                    with open(self.short_memory_file, 'r', encoding='utf-8') as f:
-                        file_content = f.read().strip()
-                        if file_content:
-                            memory = json.loads(file_content)
-                except (json.JSONDecodeError, Exception):
-                    memory = {"records": [], "last_updated": datetime.now().isoformat() + "Z"}
-            
-            # 添加新记录
-            record = {
-                "id": str(int(time.time() * 1000)),
-                "content": task_record,
-                "timestamp": datetime.now().isoformat() + "Z"
-            }
-            memory["records"].append(record)
-            
-            # 限制最多20条记录
-            if len(memory["records"]) > 20:
-                memory["records"].pop(0)
+            # 处理new_record为True的情况
+            if new_record:
+                # 新记录时检查传入的task_chain是否为空
+                if not task_chain:
+                    return {"success": False, "error": "任务链不能为空"}
+                memory = {
+                    "record": task_record,
+                    "last_updated": datetime.now().isoformat() + "Z"
+                }
+            else:
+                # 加载短期记忆
+                memory = {"record": {}, "last_updated": datetime.now().isoformat() + "Z"}
+                if os.path.exists(self.short_memory_file):
+                    try:
+                        with open(self.short_memory_file, 'r', encoding='utf-8') as f:
+                            file_content = f.read().strip()
+                            if file_content:
+                                memory = json.loads(file_content)
+                    except (json.JSONDecodeError, Exception):
+                        memory = {"record": {}, "last_updated": datetime.now().isoformat() + "Z"}
+                
+                # 检查现有记录中的task_chain是否有内容
+                if 'record' in memory and 'task_chain' in memory['record']:
+                    if not memory['record']['task_chain']:
+                        return {"success": False, "error": "任务链不能为空"}
+                
+                # 覆盖记录
+                memory["record"] = task_record
             
             memory["last_updated"] = datetime.now().isoformat() + "Z"
             
@@ -174,7 +203,26 @@ class MemorySystem:
             with open(self.short_memory_file, 'w', encoding='utf-8') as f:
                 json.dump(memory, f, indent=2, ensure_ascii=False)
             
-            return {"success": True, "output": f"已完成{current_task}任务，下一步完成{next_task}任务，可以使用help获取规则和工具信息"}
+            # 构建输出
+            if use_tool:
+                output = f"[系统]当前完成任务{current_task}, 下一个任务{next_task}，可使用send_mcp_tool_documentation{{tool_name: str}}函数获取工具说明文档，不填写参数返回可用工具列表，完成后使用record记录进度"
+            else:
+                output = f"[系统]当前完成任务{current_task}, 下一个任务{next_task}，完成后使用record记录进度"
+            
+            # 如果下一个任务是无，加上任务完成提示
+            if next_task == "无":
+                output += "，如果任务完成'message'内输入任务完成"
+            
+            # 检查是否需要上下文提炼提醒
+            if MemorySystem.record_count % 3 == 0:
+                output = f"[系统]请提炼上下文信息，并删除任务链上以完成的任务，当前任务链为{task_chain}, 下一个任务{next_task}"
+            
+            # 检查是否需要规则回顾
+            if MemorySystem.record_count % 5 == 0:
+                rule_str = ",".join(rule) if rule else "无"
+                output = f"[系统]回顾当前规则{rule_str}，当前任务{current_task}，下一个任务{next_task}"
+            
+            return {"success": True, "output": output}
         except Exception as e:
             return {"success": False, "error": str(e)}
     
@@ -210,11 +258,15 @@ class MemorySystem:
             "record": {
                 "description": "记录任务进度",
                 "parameters": {
-                    "task_chain": "任务链（字符串，必需）",
-                    "current_task": "当前完成的任务（字符串，必需）",
-                    "next_task": "接下来要完成的任务（字符串，必需）"
+                    "task_chain": "任务链（字符串，非必填，但为空时会报错）",
+                    "current_task": "当前完成的任务（字符串，非必填，默认值为'无'）",
+                    "next_task": "接下来要完成的任务（字符串，非必填，默认值为'无'）",
+                    "context": "上下文信息（字符串，非必填，默认值为'无'）",
+                    "rule": "规则列表（列表，非必填，默认值为[]）",
+                    "use_tool": "是否调用工具（布尔值，必填，不填写则报错）",
+                    "new_record": "是否是新记录（布尔值，非必填，默认值为False）"
                 },
-                "example": {"function": "record", "parameters": {"task_chain": "开发新功能", "current_task": "用户注册", "next_task": "邮箱验证"}}
+                "example": {"function": "record", "parameters": {"task_chain": "开发新功能", "current_task": "用户注册", "next_task": "邮箱验证", "context": "用户注册流程", "rule": ["注册规则1", "注册规则2"], "use_tool": true, "new_record": false}}
             }
         }
         
@@ -239,3 +291,24 @@ class MemorySystem:
         """
         
         return snippet_content
+    
+    def list_rule(self) -> List[Dict[str, Any]]:
+        """列出所有规则及其ID"""
+        # 从向量数据库中获取所有规则
+        all_data = self.vector_collection.get()
+        
+        # 整理规则信息
+        rules = []
+        for rule_id, document, metadata in zip(all_data['ids'], all_data['documents'], all_data['metadatas']):
+            # 处理tags字段
+            if "tags" in metadata and isinstance(metadata["tags"], str):
+                metadata["tags"] = metadata["tags"].split(",")
+            
+            rules.append({
+                "id": rule_id,
+                "rule_name": metadata.get("rule_name", "未知"),
+                "content": document,
+                "metadata": metadata
+            })
+        
+        return rules

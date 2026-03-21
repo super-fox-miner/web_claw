@@ -1,14 +1,24 @@
 import sys
 import os
+import yaml
 from typing import Dict, Any
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
+# 加载工具映射配置
+tool_mapping_path = os.path.join(project_root, 'tool_mapping.yml')
+tool_mapping = {}
+try:
+    with open(tool_mapping_path, 'r', encoding='utf-8') as f:
+        tool_mapping = yaml.safe_load(f)
+except Exception as e:
+    print(f"加载工具映射配置失败: {e}")
+
 # 导入工具函数
 try:
-    from tools import send_mcp_tool_documentation
+    from src.utils.tools import send_mcp_tool_documentation
 except ImportError as e:
     print(f"导入工具函数失败: {e}")
     # 如果导入失败，提供一个简单的实现
@@ -20,58 +30,45 @@ except ImportError as e:
 
 # 导入记忆系统
 from src.memory import MemorySystem
-
 # 初始化记忆系统
 memory_system = MemorySystem()
+print("记忆系统初始化成功")
 
 
 async def execute_inline_tool(function_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
     try:
+        # 特殊处理 send_mcp_tool_documentation
         if function_name == 'send_mcp_tool_documentation':
             tool_name = parameters.get('tool_name')
             result = send_mcp_tool_documentation(tool_name)
             return {"success": True, "output": result}
         
-        # 记忆系统工具
-        elif function_name == 'query_memory':
-            query = parameters.get('query')
-            top_k = parameters.get('top_k', 5)
-            filters = parameters.get('filters')
-            rules = memory_system.query_memory(query, top_k, filters)
-            return {"success": True, "output": rules}
+        # 检查工具是否在配置中注册
+        inline_tools = tool_mapping.get('inline_tools', [])
+        tool_info = next((tool for tool in inline_tools if tool.get('name') == function_name), None)
         
-        elif function_name == 'add_rule':
-            rule_name = parameters.get('rule_name')
-            content = parameters.get('content')
-            domain = parameters.get('domain')
-            tags = parameters.get('tags')
-            result = memory_system.add_rule(rule_name, content, domain, tags)
-            return result
-        
-        elif function_name == 'delete_rule':
-            rule_id = parameters.get('rule_id')
-            result = memory_system.delete_rule(rule_id)
-            return result
-        
-        elif function_name == 'record':
-            task_chain = parameters.get('task_chain')
-            current_task = parameters.get('current_task')
-            next_task = parameters.get('next_task')
-            # 处理 next_task 为 None 的情况
-            if next_task is None:
-                next_task = "无"
-            result = memory_system.record(task_chain, current_task, next_task)
-            return result
-        
-        elif function_name == 'get_memory_tool_documentation':
-            documentation = memory_system.get_memory_tool_documentation()
-            return {"success": True, "output": documentation}
-        
-        elif function_name == 'help':
-            result = memory_system.help()
-            return {"success": True, "output": result}
-        
-        else:
+        if not tool_info:
             return {"success": False, "error": f"未知内联函数：{function_name}"}
+        
+        # 检查记忆系统是否有对应方法
+        if hasattr(memory_system, function_name):
+            method = getattr(memory_system, function_name)
+            
+            # 处理特殊参数情况
+            if function_name == 'record':
+                # 处理 next_task 为 None 的情况
+                next_task = parameters.get('next_task')
+                if next_task is None:
+                    parameters['next_task'] = "无"
+            
+            # 调用方法并返回结果
+            result = method(**parameters)
+            # 确保返回格式正确
+            if isinstance(result, dict) and ('success' in result):
+                return result
+            else:
+                return {"success": True, "output": result}
+        else:
+            return {"success": False, "error": f"记忆系统中不存在函数：{function_name}"}
     except Exception as e:
         return {"success": False, "error": str(e)}

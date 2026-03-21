@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DeepSeek 智能助手
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  DeepSeek助手，支持WebSocket双向通信、动态配置、纯净悬浮窗
 // @author       FoxMiner
 // @match        https://chat.deepseek.com/*
@@ -545,6 +545,15 @@
             panel.insertBefore(btn, panel.querySelector('#server-status'));
         });
 
+        // 添加删除规则按钮
+        const deleteRuleBtn = document.createElement('button');
+        deleteRuleBtn.textContent = '删除规则';
+        deleteRuleBtn.addEventListener('click', async () => {
+            log.event('删除规则按钮被点击');
+            await showRuleListForDeletion();
+        });
+        panel.insertBefore(deleteRuleBtn, panel.querySelector('#server-status'));
+
         const defaultBtn = panel.querySelector('button');
         if (defaultBtn) {
             defaultBtn.classList.add('active');
@@ -572,6 +581,160 @@
             }
         }
         return false;
+    }
+
+    async function showRuleListForDeletion() {
+        try {
+            // 获取规则列表
+            const response = await fetch(`${currentApiBase}/api/rules`);
+            if (!response.ok) {
+                throw new Error(`获取规则列表失败: ${response.status}`);
+            }
+            const rules = await response.json();
+            log.data('获取到的规则列表:', rules);
+
+            if (!rules || rules.length === 0) {
+                alert('没有找到规则');
+                return;
+            }
+
+            // 创建规则选择对话框
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                padding: 20px;
+                z-index: 999999;
+                min-width: 400px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+            `;
+
+            const title = document.createElement('h3');
+            title.textContent = '选择要删除的规则';
+            title.style.cssText = 'margin-top: 0; margin-bottom: 16px; font-size: 16px; font-weight: 600;';
+            dialog.appendChild(title);
+
+            const ruleList = document.createElement('div');
+            ruleList.style.cssText = 'margin-bottom: 16px;';
+
+            rules.forEach(rule => {
+                const ruleItem = document.createElement('div');
+                ruleItem.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    padding: 8px 12px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    margin-bottom: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                `;
+                ruleItem.style.backgroundColor = '#f9fafb';
+
+                ruleItem.addEventListener('mouseenter', () => {
+                    ruleItem.style.backgroundColor = '#f3f4f6';
+                });
+                ruleItem.addEventListener('mouseleave', () => {
+                    ruleItem.style.backgroundColor = '#f9fafb';
+                });
+
+                const ruleInfo = document.createElement('div');
+                ruleInfo.style.cssText = 'flex: 1;';
+                ruleInfo.innerHTML = `
+                    <div style="font-weight: 500; margin-bottom: 2px;">${rule.rule_name || '未命名规则'}</div>
+                    <div style="font-size: 12px; color: #6b7280;">ID: ${rule.id}</div>
+                `;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '删除';
+                deleteBtn.style.cssText = `
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                `;
+
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (confirm(`确定要删除规则 "${rule.rule_name || '未命名规则'}" 吗？`)) {
+                        try {
+                            const deleteResponse = await fetch(`${currentApiBase}/api/rules/${rule.id}`, {
+                                method: 'DELETE'
+                            });
+                            if (deleteResponse.ok) {
+                                alert('规则删除成功');
+                                dialog.remove();
+                            } else {
+                                throw new Error(`删除规则失败: ${deleteResponse.status}`);
+                            }
+                        } catch (error) {
+                            log.error('删除规则失败:', error);
+                            alert('删除规则失败，请检查服务器连接');
+                        }
+                    }
+                });
+
+                ruleItem.appendChild(ruleInfo);
+                ruleItem.appendChild(deleteBtn);
+                ruleList.appendChild(ruleItem);
+            });
+
+            dialog.appendChild(ruleList);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '关闭';
+            closeBtn.style.cssText = `
+                width: 100%;
+                background: #f3f4f6;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+            `;
+
+            closeBtn.addEventListener('click', () => {
+                dialog.remove();
+            });
+
+            dialog.appendChild(closeBtn);
+
+            // 创建遮罩层
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999998;
+            `;
+
+            overlay.addEventListener('click', () => {
+                dialog.remove();
+                overlay.remove();
+            });
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(dialog);
+        } catch (error) {
+            log.error('获取规则列表失败:', error);
+            alert('获取规则列表失败，请检查服务器连接');
+        }
     }
 
     function updateServerStatus(connected) {
