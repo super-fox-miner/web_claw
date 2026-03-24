@@ -208,36 +208,47 @@ if (-not $pythonCmd) {
     Write-Host "Using Python: $pythonCmd" -ForegroundColor Green
 }
 
-# Check virtual environment
+# Check virtual environment (support both .venv and venv)
 Write-Host "Checking virtual environment..." -ForegroundColor Cyan
-if (-not (Test-Path "venv")) {
-    Write-Host "Creating virtual environment..." -ForegroundColor Cyan
+
+# Determine which virtual environment directory to use
+$venvDir = if (Test-Path ".venv") { 
+    ".venv" 
+} elseif (Test-Path "venv") { 
+    "venv" 
+} else { 
+    $null 
+}
+
+if (-not $venvDir) {
+    # No virtual environment found, create .venv by default (you can change to "venv" if preferred)
+    $venvDir = ".venv"
+    Write-Host "Creating virtual environment in $venvDir..." -ForegroundColor Cyan
     try {
         if ($pythonCmd -is [array]) {
-            # $pythonCmd is in @('py', '-3.11') format
-            & $pythonCmd[0] $pythonCmd[1] -m venv venv
+            & $pythonCmd[0] $pythonCmd[1] -m venv $venvDir
         } else {
-            & $pythonCmd -m venv venv
+            & $pythonCmd -m venv $venvDir
         }
-        Write-Host "Virtual environment created successfully" -ForegroundColor Green
+        Write-Host "Virtual environment created successfully in $venvDir" -ForegroundColor Green
     } catch {
         Write-Host "Failed to create virtual environment: $($_.Exception.Message)" -ForegroundColor Red
         Read-Host "Press Enter to exit"
         exit 1
     }
 } else {
-    Write-Host "Virtual environment already exists" -ForegroundColor Green
+    Write-Host "Virtual environment already exists in $venvDir" -ForegroundColor Green
 }
 
 # Set Python path in virtual environment
-$venvPython = "venv\Scripts\python.exe"
+$venvPython = "$venvDir\Scripts\python.exe"
 if (-not (Test-Path $venvPython)) {
-    Write-Host "Virtual environment Python not found, recreating..." -ForegroundColor Yellow
-    Remove-Item "venv" -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "Virtual environment Python not found in $venvDir, recreating..." -ForegroundColor Yellow
+    Remove-Item $venvDir -Recurse -Force -ErrorAction SilentlyContinue
     if ($pythonCmd -is [array]) {
-        & $pythonCmd[0] $pythonCmd[1] -m venv venv
+        & $pythonCmd[0] $pythonCmd[1] -m venv $venvDir
     } else {
-        & $pythonCmd -m venv venv
+        & $pythonCmd -m venv $venvDir
     }
 }
 
@@ -267,33 +278,64 @@ if (-not $pipUpgraded) {
     Write-Host "Failed to upgrade pip, will continue with existing version" -ForegroundColor Yellow
 }
 
-# Check and install dependencies
+# Check and install dependencies with smart caching
 Write-Host "Checking dependencies..." -ForegroundColor Cyan
 try {
     # Get all dependencies from requirements.txt
     $deps = Get-Content "requirements.txt" | Where-Object { $_ -notmatch '^#' -and $_ -notmatch '^$' }
     
     if ($deps.Count -gt 0) {
-        # Get all installed packages at once (much faster than checking individually)
-        $installedPackages = & $venvPython -m pip list --format=freeze 2>$null
-        $installedPackagesHash = @{}
-        foreach ($pkg in $installedPackages) {
-            if ($pkg -match '^([^=]+)=') {
-                $installedPackagesHash[$matches[1].ToLower()] = $true
+        # Calculate hash of current requirements.txt for caching
+        $requirementsHash = Get-FileHash "requirements.txt" -Algorithm MD5
+        $lastHashPath = "last_requirements_hash.txt"
+        
+        # Check if requirements.txt has changed since last installation
+        $needsInstall = $false
+        if (Test-Path $lastHashPath) {
+            $lastHash = Get-Content $lastHashPath
+            if ($lastHash -ne $requirementsHash.Hash) {
+                Write-Host "requirements.txt has changed, reinstalling dependencies..." -ForegroundColor Yellow
+                $needsInstall = $true
+            } else {
+                Write-Host "requirements.txt unchanged, checking installed packages..." -ForegroundColor Cyan
+            }
+        } else {
+            Write-Host "First time dependency check, installing dependencies..." -ForegroundColor Cyan
+            $needsInstall = $true
+        }
+        
+        # If requirements.txt hasn't changed, check if all dependencies are installed
+        if (-not $needsInstall) {
+            # Get all installed packages at once (much faster than checking individually)
+            $installedPackages = & $venvPython -m pip list --format=freeze 2>&1
+            $installedPackagesHash = @{}
+            
+            # Check if pip list command succeeded
+            if ($LASTEXITCODE -eq 0) {
+                foreach ($pkg in $installedPackages) {
+                    if ($pkg -match '^([^=]+)=') {
+                        $installedPackagesHash[$matches[1].ToLower()] = $true
+                    }
+                }
+                
+                # Check if all dependencies are installed
+                foreach ($dep in $deps) {
+                    $depName = $dep.Split('=')[0].Split('>')[0].Split('<')[0].Trim().ToLower()
+                    if (-not $installedPackagesHash.ContainsKey($depName)) {
+                        Write-Host "Missing dependency: $depName, reinstalling..." -ForegroundColor Yellow
+                        $needsInstall = $true
+                        break
+                    }
+                }
+            } else {
+                # Pip list command failed, reinstall dependencies
+                Write-Host "Failed to check installed packages, reinstalling dependencies..." -ForegroundColor Yellow
+                $needsInstall = $true
             }
         }
         
-        # Check if all dependencies are installed
-        $allInstalled = $true
-        foreach ($dep in $deps) {
-            $depName = $dep.Split('=')[0].Split('>')[0].Split('<')[0].Trim().ToLower()
-            if (-not $installedPackagesHash.ContainsKey($depName)) {
-                $allInstalled = $false
-                break
-            }
-        }
-        
-        if (-not $allInstalled) {
+        # Install dependencies if needed
+        if ($needsInstall) {
             Write-Host "Installing dependencies..." -ForegroundColor Cyan
             $depMirrors = @(
                 "https://pypi.tuna.tsinghua.edu.cn/simple",
@@ -310,6 +352,9 @@ try {
                     & $venvPython -m pip install -r requirements.txt -i $mirror --trusted-host $hostName
                     $depsInstalled = $true
                     Write-Host "Dependencies installed successfully" -ForegroundColor Green
+                    
+                    # Save hash of successfully installed requirements
+                    $requirementsHash.Hash | Out-File $lastHashPath
                     break
                 } catch {
                     Write-Host "Mirror $mirror failed: $($_.Exception.Message)" -ForegroundColor Yellow
@@ -319,7 +364,7 @@ try {
                 Write-Host "Failed to install dependencies, please check network or install manually" -ForegroundColor Red
             }
         } else {
-            Write-Host "All dependencies are already installed" -ForegroundColor Green
+            Write-Host "All dependencies are already installed and up to date" -ForegroundColor Green
         }
     } else {
         Write-Host "No dependencies found in requirements.txt" -ForegroundColor Green
